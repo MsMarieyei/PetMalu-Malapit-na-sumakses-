@@ -1,8 +1,11 @@
-﻿Imports MySql.Data.MySqlClient
+Imports MySql.Data.MySqlClient
 
 Public Class ScanPage
     ' MySQL Connection String
     Private connectionString As String = "Server=localhost;Database=petmalu_record_system;User ID=root;Password=;"
+
+    ' Variable to track the currently opened ClientInfoPage
+    Private currentPage As ClientInfoPage = Nothing
 
     ' Event handler for scanning RFID and pressing Enter
     Private Sub TxtScanNo_KeyDown(sender As Object, e As KeyEventArgs) Handles TxtScanNo.KeyDown
@@ -14,7 +17,7 @@ Public Class ScanPage
 
                 If IsPetIDExists(petID) Then
                     SaveToDatabase(petID, "Scanned Data Here") ' Save scan history
-                    OpenClientInfoPage(petID) ' ✅ Pass petID instead of clientID
+                    OpenClientInfoPage(petID) ' Pass petID instead of clientID
                     TxtScanNo.Clear()
                 Else
                     MessageBox.Show("Error: Pet ID does not exist in the database.", "Foreign Key Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
@@ -65,7 +68,13 @@ Public Class ScanPage
 
     ' Function to open ClientInfoPage with the correct ClientID
     Private Sub OpenClientInfoPage(petID As Integer)
-        ' 🔍 Get the correct ClientID
+        ' Close the previously opened page if it exists
+        If currentPage IsNot Nothing Then
+            currentPage.Close()
+            currentPage = Nothing
+        End If
+
+        ' Get the correct ClientID
         Dim clientID As Integer = GetClientIDByPetID(petID)
 
         If clientID = -1 Then
@@ -73,15 +82,15 @@ Public Class ScanPage
             Return
         End If
 
-        ' ✅ Open ClientInfoPage with the correct ClientID
-        Dim clientInfoPage As New ClientInfoPage(clientID)
+        ' Open ClientInfoPage with the correct ClientID
+        currentPage = New ClientInfoPage(clientID)
 
-        ' ✅ Ensure TxtPetIDNo is set before showing the page
-        If clientInfoPage.TxtPetIDNo IsNot Nothing Then
-            clientInfoPage.TxtPetIDNo.Text = petID.ToString()
+        ' Ensure TxtPetIDNo is set before showing the page
+        If currentPage.TxtPetIDNo IsNot Nothing Then
+            currentPage.TxtPetIDNo.Text = petID.ToString()
         End If
 
-        clientInfoPage.Show()
+        currentPage.Show()
     End Sub
 
     ' Function to save scan history in the database
